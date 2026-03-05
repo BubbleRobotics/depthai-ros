@@ -51,7 +51,11 @@ void ImagePublisher::setup(std::shared_ptr<dai::Device> device, const utils::Img
         infoPub =
             node->create_publisher<sensor_msgs::msg::CameraInfo>(pubConfig.topicName + pubConfig.infoSuffix + "/camera_info", rclcpp::QoS(10), pubOptions);
     } else {
-        imgPubIT = image_transport::create_camera_publisher(node.get(), pubConfig.topicName + pubConfig.topicSuffix);
+        // Keep current default QoS behavior, but enable QoS overrides
+        // for image_transport-backed topics (e.g. raw/compressedDepth).
+        auto imageTransportQos = rclcpp::QoS(10).get_rmw_qos_profile();
+        imgPubIT = image_transport::create_camera_publisher(
+            node.get(), pubConfig.topicName + pubConfig.topicSuffix, imageTransportQos, pubOptions);
     }
     if(!synced) {
         if(encConfig.enabled) {
